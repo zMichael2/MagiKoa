@@ -1,5 +1,5 @@
-import Main from "./pages/main/Main";
+import MagiKoaRoutes from "./routes/MagikoaRoutes";
 
 export default function App() {
-  return <Main />;
+  return <MagiKoaRoutes />;
 }
