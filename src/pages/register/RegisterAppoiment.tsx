@@ -1,5 +1,4 @@
-import { useNavigate } from "react-router-dom";
-import { TextField, Grid, Box, Button } from "@mui/material";
+import { TextField, Grid } from "@mui/material";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -7,10 +6,9 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import { ContainerMain } from "../../components/containers/ContainerMain";
 import logo from "../../assets/Estilo.jpg";
-import { purpleDark } from "../../constants";
 import { useForm } from "react-hook-form";
 import { FormData } from "../../interfaces";
-import { ButtonStyleTheme } from "../../theme";
+import { ButtonBackAndRegister } from "../../components/buttons/ButtonBackAndRegister";
 
 const today = dayjs();
 const tomorrow = dayjs().add(0, "day");
@@ -32,7 +30,6 @@ export default function RegisterAppoiment() {
       description: "",
     },
   });
-  const navigate = useNavigate();
 
   const onRegisterForm = ({
     employee,
@@ -45,7 +42,6 @@ export default function RegisterAppoiment() {
     console.log({ employee, nameClient, date, description, hour });
   };
 
-  const onNagivate = (route: string) => navigate(route);
   return (
     <ContainerMain>
       <div className="flex flex-row ">
@@ -126,31 +122,10 @@ export default function RegisterAppoiment() {
                 />
               </Grid>
             </Grid>
-            <Box
-              mt={10}
-              display={"flex"}
-              justifyContent={"space-between"}
-              gap={3}
-            >
-              <ButtonStyleTheme
-                onClick={() => onNagivate("/")}
-                variant="outlined"
-              >
-                Volver
-              </ButtonStyleTheme>
-              <Button
-                type="submit"
-                variant="contained"
-                style={{
-                  backgroundColor: purpleDark,
-                  width: "100%",
-                  height: "45px",
-                  borderRadius: "10px",
-                }}
-              >
-                Registrar cita
-              </Button>
-            </Box>
+            <ButtonBackAndRegister
+              titleBackButton="Volver"
+              titleRegisterButton="Registrar Citas"
+            />
           </form>
         </div>
         <div className=" h-[865px] w-[547px]">
