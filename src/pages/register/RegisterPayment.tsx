@@ -75,8 +75,8 @@ export default function RegisterPayment() {
     <ContainerMain>
       <div className="flex flex-row ">
         <div className="h-[865px] w-[980px] p-14">
-          <h1>Registrar Cítas</h1>
-          <h3>Introduzca los datos para el registro de la cita</h3>
+          <h1>Registrar pagos</h1>
+          <h3>Introduzca los datos para el registro de el pago</h3>
           <form onSubmit={handleSubmit(onRegisterForm)} noValidate>
             <Grid container spacing={2} sx={{ mt: 2 }}>
               <Grid item xs={12} sm={6}>

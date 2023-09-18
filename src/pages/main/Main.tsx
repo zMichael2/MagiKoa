@@ -5,7 +5,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { Button } from "@mui/material";
 import { ContainerMain } from "../../components/containers/ContainerMain";
 import { purpleDark } from "../../constants/colors";
-import logo from "../../assets/Labs.png";
+import logo from "../../assets/LOGOFINAL.jpg";
 
 const Main = () => {
   const navigate = useNavigate();
