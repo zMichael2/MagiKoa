@@ -1,4 +1,12 @@
-import { TextField, Grid } from "@mui/material";
+import {
+  TextField,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+} from "@mui/material";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -19,12 +27,13 @@ export default function RegisterAppoiment() {
     register,
     handleSubmit,
     setValue,
-
-    formState: { errors },
+    getValues,
+    formState: { errors, defaultValues },
   } = useForm<FormData>({
     defaultValues: {
       employee: "",
       nameClient: "",
+      phone: "",
       hour: eightAM.format("h:mm a"),
       date: today.format("DD-MM-YYYY"),
       description: "",
@@ -34,24 +43,26 @@ export default function RegisterAppoiment() {
   const onRegisterForm = ({
     employee,
     nameClient,
+    phone,
     date,
     description,
     hour,
   }: FormData) => {
     console.warn("Datos");
-    console.log({ employee, nameClient, date, description, hour });
+    console.log({ employee, nameClient, date, phone, description, hour });
   };
+  console.log(defaultValues?.employee, getValues("employee"));
 
   return (
     <ContainerMain>
       <div className="flex flex-row ">
         <div className="h-[865px] w-[980px] p-14">
-          <h1>Registrar Cítas</h1>
+          <h1 className="font-bold text-2xl">Registrar Cítas</h1>
           <h3>Introduzca los datos para el registro de la cita</h3>
 
           <form onSubmit={handleSubmit(onRegisterForm)} noValidate>
             <Grid container spacing={2} sx={{ mt: 2 }}>
-              <Grid item xs={12} sm={6}>
+              {/* <Grid item xs={12} sm={12}>
                 <TextField
                   type="text"
                   label="Empleado"
@@ -64,6 +75,52 @@ export default function RegisterAppoiment() {
                   error={!!errors.employee}
                   helperText={errors.employee?.message}
                 />
+              </Grid> */}
+              <Grid item xs={12} sm={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Empleado</InputLabel>
+                  <Select
+                    MenuProps={{
+                      PaperProps: {
+                        style: { overflowY: "scroll", height: "200px" },
+                      },
+                    }}
+                    error={!!errors.employee}
+                    label="Empleado"
+                    {...register("employee", {
+                      required: "Este campo es requerido",
+                    })}
+                  >
+                    <MenuItem value={10}>Jorge Mestre</MenuItem>
+                    <MenuItem value={20}>
+                      Michael Alexander Martinez Alvarez
+                    </MenuItem>
+                    <MenuItem value={30}>
+                      Dylan Andres Batista Aristizabal
+                    </MenuItem>
+                    <MenuItem value={10}>Jorge Mestre</MenuItem>
+                    <MenuItem value={20}>
+                      Michael Alexander Martinez Alvarez
+                    </MenuItem>
+                    <MenuItem value={30}>
+                      Dylan Andres Batista Aristizabal
+                    </MenuItem>
+                    <MenuItem value={10}>Jorge Mestre</MenuItem>
+                    <MenuItem value={20}>
+                      Michael Alexander Martinez Alvarez
+                    </MenuItem>
+                    <MenuItem value={30}>
+                      Dylan Andres Batista Aristizabal
+                    </MenuItem>
+                  </Select>
+                  {errors.employee && !getValues("employee") ? (
+                    <FormHelperText style={{ color: "#d32f2f" }}>
+                      Este campo es requerido
+                    </FormHelperText>
+                  ) : (
+                    <></>
+                  )}
+                </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -76,6 +133,19 @@ export default function RegisterAppoiment() {
                   })}
                   error={!!errors.nameClient}
                   helperText={errors.nameClient?.message}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Celular"
+                  placeholder="Celular del cliente"
+                  type="text"
+                  fullWidth
+                  {...register("phone", {
+                    required: "Este campo es requerido",
+                  })}
+                  error={!!errors.phone}
+                  helperText={errors.phone?.message}
                 />
               </Grid>
 
