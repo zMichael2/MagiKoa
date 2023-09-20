@@ -1,0 +1,8 @@
+:root {
+  --purple-ligth: #a056ff;
+  --purple-dark: #410c79;
+}
+
+.header-grid {
+  background-color: gainsboro;
+}
