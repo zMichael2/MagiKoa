@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   TextField,
   Grid,
@@ -18,40 +19,47 @@ import { useForm } from "react-hook-form";
 import { FormData } from "../../interfaces";
 import { ButtonBackAndRegister } from "../../components/buttons/ButtonBackAndRegister";
 
+import { getEmployees } from "../../services/Get";
+import { postAppoiment } from "../../services/Post";
+
 const today = dayjs();
 const tomorrow = dayjs().add(0, "day");
 const eightAM = dayjs().set("hour", 8).startOf("hour");
 
+interface IListEmployees {
+  id: string;
+  nombre: string;
+}
+
 export default function RegisterAppoiment() {
+  const [listEmployees, setListEmployees] = useState<IListEmployees[]>([]);
   const {
     register,
     handleSubmit,
     setValue,
     getValues,
-    formState: { errors, defaultValues },
+    formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
       employee: "",
       nameClient: "",
       phone: "",
       hour: eightAM.format("h:mm a"),
-      date: today.format("DD-MM-YYYY"),
+      date: today.format("DD/MM/YYYY"),
       description: "",
     },
   });
 
-  const onRegisterForm = ({
-    employee,
-    nameClient,
-    phone,
-    date,
-    description,
-    hour,
-  }: FormData) => {
-    console.warn("Datos");
-    console.log({ employee, nameClient, date, phone, description, hour });
-  };
-  console.log(defaultValues?.employee, getValues("employee"));
+  const onRegisterForm = async (data: FormData) => await postAppoiment(data);
+
+  useEffect(() => {
+    const fetchDataEmployees = async () => {
+      const resp = await getEmployees();
+
+      setListEmployees(resp);
+    };
+    fetchDataEmployees();
+  }, []);
 
   return (
     <ContainerMain>
@@ -62,20 +70,6 @@ export default function RegisterAppoiment() {
 
           <form onSubmit={handleSubmit(onRegisterForm)} noValidate>
             <Grid container spacing={2} sx={{ mt: 2 }}>
-              {/* <Grid item xs={12} sm={12}>
-                <TextField
-                  type="text"
-                  label="Empleado"
-                  placeholder="Nombre del empleado"
-                  fullWidth
-                  style={{ fontFamily: "Signika Negative" }}
-                  {...register("employee", {
-                    required: "Este campo es requerido",
-                  })}
-                  error={!!errors.employee}
-                  helperText={errors.employee?.message}
-                />
-              </Grid> */}
               <Grid item xs={12} sm={12}>
                 <FormControl fullWidth>
                   <InputLabel>Empleado</InputLabel>
@@ -91,27 +85,13 @@ export default function RegisterAppoiment() {
                       required: "Este campo es requerido",
                     })}
                   >
-                    <MenuItem value={10}>Jorge Mestre</MenuItem>
-                    <MenuItem value={20}>
-                      Michael Alexander Martinez Alvarez
-                    </MenuItem>
-                    <MenuItem value={30}>
-                      Dylan Andres Batista Aristizabal
-                    </MenuItem>
-                    <MenuItem value={10}>Jorge Mestre</MenuItem>
-                    <MenuItem value={20}>
-                      Michael Alexander Martinez Alvarez
-                    </MenuItem>
-                    <MenuItem value={30}>
-                      Dylan Andres Batista Aristizabal
-                    </MenuItem>
-                    <MenuItem value={10}>Jorge Mestre</MenuItem>
-                    <MenuItem value={20}>
-                      Michael Alexander Martinez Alvarez
-                    </MenuItem>
-                    <MenuItem value={30}>
-                      Dylan Andres Batista Aristizabal
-                    </MenuItem>
+                    {listEmployees.map((employee) => {
+                      return (
+                        <MenuItem key={employee.id} value={employee.id}>
+                          {employee.nombre}
+                        </MenuItem>
+                      );
+                    })}
                   </Select>
                   {errors.employee && !getValues("employee") ? (
                     <FormHelperText style={{ color: "#d32f2f" }}>
@@ -141,11 +121,7 @@ export default function RegisterAppoiment() {
                   placeholder="Celular del cliente"
                   type="text"
                   fullWidth
-                  {...register("phone", {
-                    required: "Este campo es requerido",
-                  })}
-                  error={!!errors.phone}
-                  helperText={errors.phone?.message}
+                  {...register("phone")}
                 />
               </Grid>
 
@@ -153,11 +129,12 @@ export default function RegisterAppoiment() {
                 <Grid item xs={12} sm={6}>
                   <DatePicker
                     defaultValue={today}
+                    format="DD/MM/YYYY"
                     minDate={tomorrow}
                     views={["day", "month", "year"]}
                     label="Fecha"
                     onChange={(value) =>
-                      setValue("date", value!.format("DD-MM-YYYY"))
+                      setValue("date", value!.format("DD/MM/YYYY"))
                     }
                     slotProps={{ textField: { fullWidth: true } }}
                   />

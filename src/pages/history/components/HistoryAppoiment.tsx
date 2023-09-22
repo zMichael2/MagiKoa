@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   GridRowsProp,
   GridRowModes,
@@ -13,42 +14,22 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useState } from "react";
-import { Box, Grid } from "@mui/material";
 import dayjs from "dayjs";
-import { Button } from "@mui/material";
+import { Button, Box, Grid } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DatePicker } from "@mui/x-date-pickers";
+import { getAppoiment } from "../../../services/Get";
+import { deleteAppoiment } from "../../../services/Delete";
+import { putAppoiment } from "../../../services/Put";
 
-const today = dayjs();
 const tomorrow = dayjs().add(0, "day");
 
-const initialRows: GridRowsProp = [
-  {
-    id: 1,
-    empleado: "Viany Lizeth Miranda Marquez",
-    cliente: "Jorge Mestre Lozano",
-    description: "Corte de cabello",
-    celular: "3002333782",
-    fecha: new Date(),
-    hora: "4:00 pm",
-  },
-  {
-    id: 2,
-    empleado: "Lizeth Torres Gomez",
-    cliente: "Dylan Guitierrez ruiz",
-    description: "Alisado",
-    celular: "3002354382",
-    fecha: new Date("December 17, 1995 03:24:00"),
-    hora: "1:00 pm",
-  },
-];
-
 export const HistoryAppoiment = () => {
-  const [rows, setRows] = useState(initialRows);
+  const [rows, setRows] = useState<GridRowsProp>([]);
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+  const [filteredAppoiment, setFilteredAppoiment] = useState<GridRowsProp>([]);
 
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
     params,
@@ -67,8 +48,10 @@ export const HistoryAppoiment = () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
-  const handleDeleteClick = (id: GridRowId) => () => {
-    setRows(rows.filter((row) => row.id !== id));
+  const handleDeleteClick = (id: GridRowId) => async () => {
+    const response = await deleteAppoiment(String(id));
+    console.log(response);
+    setFilteredAppoiment(rows.filter((row) => row.id !== id));
   };
 
   const handleCancelClick = (id: GridRowId) => () => {
@@ -83,9 +66,23 @@ export const HistoryAppoiment = () => {
     }
   };
 
-  const processRowUpdate = (newRow: GridRowModel) => {
+  const processRowUpdate = async (newRow: GridRowModel) => {
     const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+    setFilteredAppoiment(
+      rows.map((row) => (row.id === newRow.id ? updatedRow : row))
+    );
+
+    const data = {
+      employee: newRow.empleado_id,
+      description: newRow.descripcion,
+      nameClient: newRow.usuario,
+      phone: newRow.celular,
+      date: dayjs(newRow.fecha).format("DD/MM/YYYY"),
+      hour: newRow.hora,
+    };
+
+    await putAppoiment(data, newRow.id);
+
     return updatedRow;
   };
 
@@ -94,13 +91,13 @@ export const HistoryAppoiment = () => {
   };
   const columns: GridColDef[] = [
     {
-      field: "empleado",
+      field: "Empleado.nombre",
       headerName: "Empleado",
       width: 200,
       editable: true,
       headerClassName: "header-grid",
     },
-    { field: "cliente", headerName: "Cliente", width: 182, editable: true },
+    { field: "usuario", headerName: "Cliente", width: 182, editable: true },
     {
       field: "celular",
       headerName: "Celular",
@@ -109,7 +106,7 @@ export const HistoryAppoiment = () => {
       headerClassName: "header-grid",
     },
     {
-      field: "description",
+      field: "descripcion",
       headerName: "Descripción",
       width: 200,
       editable: true,
@@ -121,7 +118,12 @@ export const HistoryAppoiment = () => {
       editable: true,
       type: "date",
       headerClassName: "header-grid",
-      valueFormatter: (params) => dayjs(params.value).format("DD/MM/YYYY"),
+      valueFormatter: (params) =>
+        typeof params.value === "object"
+          ? new Date(params.value).toLocaleString("es-CO", {
+              dateStyle: "medium",
+            })
+          : params.value,
     },
     {
       field: "hora",
@@ -180,6 +182,17 @@ export const HistoryAppoiment = () => {
       },
     },
   ];
+
+  useEffect(() => {
+    const fetchDataEmployees = async () => {
+      const resp = await getAppoiment();
+
+      setFilteredAppoiment(resp);
+      setRows(resp);
+    };
+    fetchDataEmployees();
+  }, []);
+
   return (
     <>
       <Box
@@ -191,18 +204,43 @@ export const HistoryAppoiment = () => {
         alignItems={"center"}
       >
         <h1 className="font-bold text-2xl">Historial de citas</h1>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <Grid item xs={6} sm={2}>
-            <DatePicker
-              format="DD-MM-YYYY"
-              defaultValue={today}
-              minDate={tomorrow}
-              views={["day", "month", "year"]}
-              label="Fecha"
-              slotProps={{ textField: { fullWidth: true } }}
-            />
-          </Grid>
-        </LocalizationProvider>
+        <Box display={"flex"} flexDirection={"row"} gap={2}>
+          <Button
+            onClick={() => setFilteredAppoiment(rows)}
+            variant="outlined"
+            endIcon={<VisibilityIcon />}
+          >
+            Ver todos
+          </Button>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Grid item xs={6} sm={2}>
+              <DatePicker
+                format="DD/MM/YYYY"
+                minDate={tomorrow}
+                onChange={(value) => {
+                  const newDate = value!.format("DD/MM/YYYY");
+
+                  const productosFiltrados = rows.filter(
+                    (row) => row.fecha === newDate
+                  );
+
+                  if (newDate !== "") {
+                    if (productosFiltrados.length) {
+                      setFilteredAppoiment(productosFiltrados);
+                    } else {
+                      setFilteredAppoiment([]);
+                    }
+
+                    return;
+                  }
+                }}
+                views={["day", "month", "year"]}
+                label="Fecha"
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+            </Grid>
+          </LocalizationProvider>
+        </Box>
       </Box>
       <Box
         sx={{
@@ -220,7 +258,7 @@ export const HistoryAppoiment = () => {
       >
         <DataGrid
           style={{ height: "100%" }}
-          rows={rows}
+          rows={filteredAppoiment}
           columns={columns}
           editMode="row"
           rowModesModel={rowModesModel}

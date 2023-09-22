@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   TextField,
   Grid,
@@ -5,42 +7,42 @@ import {
   Select,
   MenuItem,
   FormControl,
+  FormHelperText,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import dayjs, { Dayjs } from "dayjs";
-import { useForm } from "react-hook-form";
+import dayjs from "dayjs";
 
 import { ContainerMain } from "../../components/containers/ContainerMain";
 import { ButtonBackAndRegister } from "../../components/buttons/ButtonBackAndRegister";
 
+import { getEmployees } from "../../services/Get";
+import { postPayment } from "../../services/Post";
+
 import logo from "../../assets/Estilo.jpg";
+import { FormDataPayment } from "../../interfaces";
 
 const today = dayjs();
-const tomorrow = dayjs().add(0, "day");
 
-interface FormData {
-  employee: string;
-  nameClient: string;
-  gasto: number;
-  insumo: number;
-  servicio: number;
-  typePay: string;
-  date: Dayjs | null | string;
-  description: string;
+interface IListEmployees {
+  id: string;
+  nombre: string;
 }
 
 export default function RegisterPayment() {
+  const [listEmployees, setListEmployees] = useState<IListEmployees[]>([]);
   const {
     register,
     handleSubmit,
+    getValues,
+    setValue,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<FormDataPayment>({
     defaultValues: {
       employee: "",
       nameClient: "",
-      date: today.format("DD-MM-YYYY"),
+      date: today.format("DD/MM/YYYY"),
       description: "",
       typePay: "Efectivo",
       gasto: 0,
@@ -49,28 +51,23 @@ export default function RegisterPayment() {
     },
   });
 
-  const onRegisterForm = ({
-    employee,
-    nameClient,
-    date,
-    description,
-    typePay,
-    gasto,
-    insumo,
-    servicio,
-  }: FormData) => {
-    console.warn("Datos");
-    console.log({
-      employee,
-      nameClient,
-      date,
-      description,
-      typePay,
-      gasto,
-      insumo,
-      servicio,
+  const onRegisterForm = async (data: FormDataPayment) =>
+    await postPayment({
+      ...data,
+      gasto: Number(data.gasto),
+      insumo: Number(data.insumo),
+      servicio: Number(data.servicio),
     });
-  };
+
+  useEffect(() => {
+    const fetchDataEmployees = async () => {
+      const resp = await getEmployees();
+
+      setListEmployees(resp);
+    };
+    fetchDataEmployees();
+  }, []);
+
   return (
     <ContainerMain>
       <div className="flex flex-row ">
@@ -80,17 +77,36 @@ export default function RegisterPayment() {
           <form onSubmit={handleSubmit(onRegisterForm)} noValidate>
             <Grid container spacing={2} sx={{ mt: 2 }}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Empleado"
-                  type="text"
-                  placeholder="Nombre del empleado"
-                  fullWidth
-                  {...register("employee", {
-                    required: "Este campo es requerido",
-                  })}
-                  error={!!errors.employee}
-                  helperText={errors.employee?.message}
-                />
+                <FormControl fullWidth>
+                  <InputLabel>Empleado</InputLabel>
+                  <Select
+                    MenuProps={{
+                      PaperProps: {
+                        style: { overflowY: "scroll", height: "200px" },
+                      },
+                    }}
+                    error={!!errors.employee}
+                    label="Empleado"
+                    {...register("employee", {
+                      required: "Este campo es requerido",
+                    })}
+                  >
+                    {listEmployees.map((employee) => {
+                      return (
+                        <MenuItem key={employee.id} value={employee.id}>
+                          {employee.nombre}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                  {errors.employee && !getValues("employee") ? (
+                    <FormHelperText style={{ color: "#d32f2f" }}>
+                      Este campo es requerido
+                    </FormHelperText>
+                  ) : (
+                    <></>
+                  )}
+                </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -164,9 +180,12 @@ export default function RegisterPayment() {
                 <Grid item xs={12} sm={6}>
                   <DatePicker
                     defaultValue={today}
-                    minDate={tomorrow}
+                    format="DD/MM/YYYY"
                     views={["day", "month", "year"]}
                     label="Fecha"
+                    onChange={(value) =>
+                      setValue("date", value!.format("DD/MM/YYYY"))
+                    }
                     slotProps={{ textField: { fullWidth: true } }}
                   />
                 </Grid>
