@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   GridRowsProp,
   GridRowModes,
@@ -30,42 +31,23 @@ import {
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DatePicker } from "@mui/x-date-pickers";
+import { DemoItem } from "@mui/x-date-pickers/internals/demo";
 
-const initialRows: GridRowsProp = [
-  {
-    id: 1,
-    empleado: "Viany Lizeth Miranda Marquez",
-    description: "Corte de cabello",
-    gasto: 100000,
-    insumo: 5000,
-    servicio: 20000,
-    total: 100000,
-    metodopago: "Efectivo",
-    fecha: new Date(),
-  },
-  {
-    id: 2,
-    empleado: "Jorge Mestre Lozano",
-    description: "Corte de cabello",
-    gasto: 40000,
-    insumo: 5000,
-    servicio: 20000,
-    total: 120000,
-    metodopago: "Tarjeta",
-    fecha: new Date(),
-  },
-];
+import { getPayments } from "../../../services/Get";
+import { deletePayment } from "../../../services/Delete";
+import { putPayment } from "../../../services/Put";
 
 const options = ["Dia", "Mes"];
 const tomorrow = dayjs().add(0, "day");
 
 export const HistoryPay = () => {
-  const [selectedOption, setSelectedOption] = useState<string>("Dia");
+  const [selectedOption, setSelectedOption] = useState<string>("");
 
-  const [rows, setRows] = useState(initialRows);
+  const [rows, setRows] = useState<GridRowsProp>([]);
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+  const [filteredAppoiment, setFilteredAppoiment] = useState<GridRowsProp>([]);
 
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
     params,
@@ -81,6 +63,7 @@ export const HistoryPay = () => {
       target: { value },
     } = event;
     setSelectedOption(value);
+    setFilteredAppoiment([]);
   };
 
   const handleEditClick = (id: GridRowId) => () => {
@@ -88,11 +71,15 @@ export const HistoryPay = () => {
   };
 
   const handleSaveClick = (id: GridRowId) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View },
+    });
   };
 
-  const handleDeleteClick = (id: GridRowId) => () => {
-    setRows(rows.filter((row) => row.id !== id));
+  const handleDeleteClick = (id: GridRowId) => async () => {
+    await deletePayment(String(id));
+    setFilteredAppoiment(rows.filter((row) => row.id !== id));
   };
 
   const handleCancelClick = (id: GridRowId) => () => {
@@ -107,25 +94,42 @@ export const HistoryPay = () => {
     }
   };
 
-  const processRowUpdate = (newRow: GridRowModel) => {
+  const processRowUpdate = async (newRow: GridRowModel) => {
     const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-    return updatedRow;
+    setFilteredAppoiment(
+      rows.map((row) => (row.id === newRow.id ? updatedRow : row))
+    );
+    const data = {
+      employee: newRow.empleado_id,
+      description: newRow.descripcion,
+      gasto: +newRow.gasto,
+      insumo: +newRow.insumo,
+      servicio: +newRow.servicio,
+      typePay: newRow.tipo_pago,
+      date: dayjs(newRow.fecha).format("DD/MM/YYYY"),
+    };
+    await putPayment(data, newRow.id);
+
+    const total =
+      Number(newRow.insumo) + Number(newRow.servicio) - Number(newRow.gasto);
+
+    return { ...updatedRow, total };
   };
 
   const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
     setRowModesModel(newRowModesModel);
   };
+
   const columns: GridColDef[] = [
     {
-      field: "empleado",
+      field: "Empleado.nombre",
       headerName: "Empleado",
       width: 200,
       editable: true,
       headerClassName: "header-grid",
     },
     {
-      field: "description",
+      field: "descripcion",
       headerName: "Descripción",
       width: 200,
       editable: true,
@@ -139,6 +143,11 @@ export const HistoryPay = () => {
       align: "left",
       headerAlign: "left",
       headerClassName: "header-grid",
+      valueFormatter: ({ value }) =>
+        Number(value).toLocaleString("es-CO", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        }),
     },
     {
       field: "insumo",
@@ -148,26 +157,42 @@ export const HistoryPay = () => {
       align: "left",
       headerAlign: "left",
       type: "number",
+      valueFormatter: ({ value }) =>
+        Number(value).toLocaleString("es-CO", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        }),
     },
     {
       field: "servicio",
       headerName: "Servicio",
+      editable: true,
       width: 150,
       type: "number",
       align: "left",
       headerAlign: "left",
       headerClassName: "header-grid",
+      valueFormatter: ({ value }) =>
+        Number(value).toLocaleString("es-CO", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        }),
     },
     {
       field: "total",
       headerName: "Total",
       width: 100,
-
+      type: "number",
       align: "left",
       headerAlign: "left",
+      valueFormatter: ({ value }) =>
+        Number(value).toLocaleString("es-CO", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        }),
     },
     {
-      field: "metodopago",
+      field: "tipo_pago",
       headerName: "Metodo de pago",
       width: 130,
       type: "number",
@@ -181,10 +206,13 @@ export const HistoryPay = () => {
       headerName: "Fecha",
       width: 150,
       editable: true,
-
       type: "date",
-
-      valueFormatter: (params) => dayjs(params.value).format("DD/MM/YYYY"),
+      valueFormatter: (params) =>
+        typeof params.value === "object"
+          ? new Date(params.value).toLocaleString("es-CO", {
+              dateStyle: "medium",
+            })
+          : params.value,
     },
 
     {
@@ -239,6 +267,16 @@ export const HistoryPay = () => {
       },
     },
   ];
+
+  useEffect(() => {
+    const fetchDataEmployees = async () => {
+      const resp = await getPayments();
+      setFilteredAppoiment(resp);
+      setRows(resp);
+    };
+    fetchDataEmployees();
+  }, []);
+
   return (
     <>
       <Box
@@ -252,6 +290,16 @@ export const HistoryPay = () => {
         <h1 className="font-bold text-2xl">Historial de Pagos</h1>
 
         <Box display={"flex"} flexDirection={"row"} gap={2}>
+          <Button
+            onClick={() => {
+              setSelectedOption("");
+              setFilteredAppoiment(rows);
+            }}
+            variant="outlined"
+            endIcon={<VisibilityIcon />}
+          >
+            Ver todos
+          </Button>
           <FormControl sx={{ width: 300 }}>
             <InputLabel>Selecciona una opcion</InputLabel>
             <Select
@@ -268,53 +316,64 @@ export const HistoryPay = () => {
               ))}
             </Select>
           </FormControl>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            {selectedOption !== "" ? (
+              selectedOption === "Dia" ? (
+                <Grid item xs={6} sm={2}>
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    maxDate={tomorrow}
+                    onChange={(value) => {
+                      const newDate = value!.format("DD/MM/YYYY");
 
-          {selectedOption === "Dia" ? (
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <Grid item xs={6} sm={2}>
-                <DatePicker
-                  defaultValue={dayjs()}
-                  format="DD-MM-YYYY"
-                  maxDate={tomorrow}
-                  views={["day", "month", "year"]}
-                  label="Fecha"
-                  slotProps={{ textField: { fullWidth: true } }}
-                />
-              </Grid>
-            </LocalizationProvider>
-          ) : (
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <Grid item xs={6} sm={2}>
-                <DatePicker
-                  defaultValue={dayjs()}
-                  maxDate={tomorrow}
-                  views={["month"]}
-                  label="Mes"
-                  slotProps={{ textField: { fullWidth: true } }}
-                />
-              </Grid>
-            </LocalizationProvider>
-          )}
-          {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Grid item xs={6} sm={2}>
-              <DatePicker
-                defaultValue={today}
-                maxDate={tomorrow}
-                views={["day", "month", "year"]}
-                label="Fecha"
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-            </Grid>
-            <Grid item xs={6} sm={2}>
-              <DatePicker
-                defaultValue={today}
-                maxDate={tomorrow}
-                views={["month"]}
-                label="Mes"
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-            </Grid>
-          </LocalizationProvider> */}
+                      const productosFiltrados = rows.filter(
+                        (row) => row.fecha === newDate
+                      );
+
+                      if (newDate !== "") {
+                        if (productosFiltrados.length) {
+                          setFilteredAppoiment(productosFiltrados);
+                        } else {
+                          setFilteredAppoiment([]);
+                        }
+                      }
+                    }}
+                    views={["day", "month", "year"]}
+                    label="Fecha"
+                    slotProps={{ textField: { fullWidth: true } }}
+                  />
+                </Grid>
+              ) : (
+                <Grid item xs={6} sm={2}>
+                  <DemoItem>
+                    <DatePicker
+                      onChange={(value) => {
+                        const newMonth = value!.format("MM");
+
+                        const productosFiltrados = rows.filter((row) =>
+                          row.fecha.split("/")[1].includes(newMonth)
+                        );
+
+                        if (newMonth !== "") {
+                          if (productosFiltrados.length) {
+                            setFilteredAppoiment(productosFiltrados);
+                          } else {
+                            setFilteredAppoiment([]);
+                          }
+                        }
+                      }}
+                      maxDate={tomorrow}
+                      views={["month"]}
+                      label="Mes"
+                      slotProps={{ textField: { fullWidth: true } }}
+                    />
+                  </DemoItem>
+                </Grid>
+              )
+            ) : (
+              <></>
+            )}
+          </LocalizationProvider>
         </Box>
       </Box>
       <Box
@@ -333,7 +392,7 @@ export const HistoryPay = () => {
       >
         <DataGrid
           style={{ height: "100%" }}
-          rows={rows}
+          rows={filteredAppoiment}
           columns={columns}
           editMode="row"
           rowModesModel={rowModesModel}
