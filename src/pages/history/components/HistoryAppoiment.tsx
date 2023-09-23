@@ -44,6 +44,7 @@ export const HistoryAppoiment: React.FC = () => {
     setFilteredRows(
       rows.map((row) => (row.id === newRow.id ? updatedRow : row))
     );
+    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
 
     const data = {
       employee: newRow.empleado_id,
@@ -53,6 +54,8 @@ export const HistoryAppoiment: React.FC = () => {
       date: newRow.fecha,
       hour: newRow.hora,
     };
+
+    // console.log(data, "edit");
 
     await putAppoiment(data, newRow.id);
 
@@ -151,6 +154,10 @@ export const HistoryAppoiment: React.FC = () => {
   useEffect(() => {
     const fetchListHistoryAppoiment = async () => {
       const resp = await getAppoiment();
+
+      // const response = resp.map((value) => {
+      //   return { ...value, fecha: dayjs(value.fecha).format("DD/MM/YYYY") };
+      // });
 
       setFilteredRows(resp);
       setRows(resp);

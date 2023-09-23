@@ -80,7 +80,8 @@ export const ContainerTablePay: React.FC<IContainerTablePay> = ({
                       const newDate = value!.format("DD/MM/YYYY");
 
                       const productosFiltrados = rows.filter(
-                        (row) => row.fecha === newDate
+                        (row) =>
+                          dayjs(row.fecha).format("DD/MM/YYYY") === newDate
                       );
 
                       if (newDate !== "") {
@@ -104,7 +105,10 @@ export const ContainerTablePay: React.FC<IContainerTablePay> = ({
                         const newMonth = value!.format("MM");
 
                         const productosFiltrados = rows.filter((row) =>
-                          row.fecha.split("/")[1].includes(newMonth)
+                          dayjs(row.fecha)
+                            .format("DD/MM/YYYY")
+                            .split("/")[1]
+                            .includes(newMonth)
                         );
 
                         if (newMonth !== "") {

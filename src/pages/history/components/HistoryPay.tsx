@@ -56,6 +56,8 @@ export const HistoryPay: React.FC = () => {
     setFilteredRows(
       rows.map((row) => (row.id === newRow.id ? updatedRow : row))
     );
+    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+
     const data = {
       employee: newRow.empleado_id,
       description: newRow.descripcion,
