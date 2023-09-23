@@ -49,13 +49,14 @@ export const HistoryPay: React.FC = () => {
   const handleDeleteClick = (id: GridRowId) => async () => {
     await deletePayment(String(id));
     setFilteredRows(filteredRows.filter((row) => row.id !== id));
+    setRows(rows.filter((row) => row.id !== id));
   };
 
   const processRowUpdate = async (newRow: GridRowModel) => {
     const updatedRow = { ...newRow, isNew: false };
-    setFilteredRows(
-      rows.map((row) => (row.id === newRow.id ? updatedRow : row))
-    );
+    // setFilteredRows(
+    //   rows.map((row) => (row.id === newRow.id ? updatedRow : row))
+    // );
     setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
 
     const data = {
