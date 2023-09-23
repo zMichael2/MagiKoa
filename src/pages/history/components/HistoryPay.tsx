@@ -1,102 +1,59 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
 import {
-  GridRowsProp,
   GridRowModes,
-  GridEventListener,
-  GridRowEditStopReasons,
   GridRowId,
   GridRowModel,
   DataGrid,
   GridColDef,
-  GridRowModesModel,
 } from "@mui/x-data-grid";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useState } from "react";
-import dayjs from "dayjs";
-import {
-  Button,
-  FormControl,
-  InputLabel,
-  Box,
-  Select,
-  OutlinedInput,
-  MenuItem,
-  Checkbox,
-  ListItemText,
-  SelectChangeEvent,
-  Grid,
-} from "@mui/material";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { DatePicker } from "@mui/x-date-pickers";
-import { DemoItem } from "@mui/x-date-pickers/internals/demo";
+import { Button, SelectChangeEvent } from "@mui/material";
+import { ContainerTablePay } from "./containers/ContainerTablePay";
+import { useEventsTableHistory } from "../../../hooks/useEventsTableHistory";
 
 import { getPayments } from "../../../services/Get";
 import { deletePayment } from "../../../services/Delete";
 import { putPayment } from "../../../services/Put";
 
-const options = ["Dia", "Mes"];
-const tomorrow = dayjs().add(0, "day");
+import { options } from "../../../constants";
 
-export const HistoryPay = () => {
+export const HistoryPay: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<string>("");
 
-  const [rows, setRows] = useState<GridRowsProp>([]);
-  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
-  const [filteredAppoiment, setFilteredAppoiment] = useState<GridRowsProp>([]);
-
-  const handleRowEditStop: GridEventListener<"rowEditStop"> = (
-    params,
-    event
-  ) => {
-    if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-      event.defaultMuiPrevented = true;
-    }
-  };
+  const {
+    filteredRows,
+    handleCancelClick,
+    handleEditClick,
+    handleRowEditStop,
+    handleRowModesModelChange,
+    handleSaveClick,
+    rowModesModel,
+    rows,
+    setFilteredRows,
+    setRowModesModel,
+    setRows,
+  } = useEventsTableHistory();
 
   const handleChange = (event: SelectChangeEvent<typeof selectedOption>) => {
     const {
       target: { value },
     } = event;
     setSelectedOption(value);
-    setFilteredAppoiment([]);
-  };
-
-  const handleEditClick = (id: GridRowId) => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-  };
-
-  const handleSaveClick = (id: GridRowId) => () => {
-    setRowModesModel({
-      ...rowModesModel,
-      [id]: { mode: GridRowModes.View },
-    });
+    setFilteredRows([]);
   };
 
   const handleDeleteClick = (id: GridRowId) => async () => {
     await deletePayment(String(id));
-    setFilteredAppoiment(rows.filter((row) => row.id !== id));
-  };
-
-  const handleCancelClick = (id: GridRowId) => () => {
-    setRowModesModel({
-      ...rowModesModel,
-      [id]: { mode: GridRowModes.View, ignoreModifications: true },
-    });
-
-    const editedRow = rows.find((row) => row.id === id);
-    if (editedRow!.isNew) {
-      setRows(rows.filter((row) => row.id !== id));
-    }
+    setFilteredRows(filteredRows.filter((row) => row.id !== id));
   };
 
   const processRowUpdate = async (newRow: GridRowModel) => {
     const updatedRow = { ...newRow, isNew: false };
-    setFilteredAppoiment(
+    setFilteredRows(
       rows.map((row) => (row.id === newRow.id ? updatedRow : row))
     );
     const data = {
@@ -106,7 +63,7 @@ export const HistoryPay = () => {
       insumo: +newRow.insumo,
       servicio: +newRow.servicio,
       typePay: newRow.tipo_pago,
-      date: dayjs(newRow.fecha).format("DD/MM/YYYY"),
+      date: newRow.fecha,
     };
     await putPayment(data, newRow.id);
 
@@ -114,10 +71,6 @@ export const HistoryPay = () => {
       Number(newRow.insumo) + Number(newRow.servicio) - Number(newRow.gasto);
 
     return { ...updatedRow, total };
-  };
-
-  const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
-    setRowModesModel(newRowModesModel);
   };
 
   const columns: GridColDef[] = [
@@ -207,12 +160,7 @@ export const HistoryPay = () => {
       width: 150,
       editable: true,
       type: "date",
-      valueFormatter: (params) =>
-        typeof params.value === "object"
-          ? new Date(params.value).toLocaleString("es-CO", {
-              dateStyle: "medium",
-            })
-          : params.value,
+      valueFormatter: (params) => dayjs(params.value).format("DD/MM/YYYY"),
     },
 
     {
@@ -269,141 +217,41 @@ export const HistoryPay = () => {
   ];
 
   useEffect(() => {
-    const fetchDataEmployees = async () => {
+    const fetchListHistoryPay = async () => {
       const resp = await getPayments();
-      setFilteredAppoiment(resp);
+      setFilteredRows(resp);
       setRows(resp);
     };
-    fetchDataEmployees();
+    fetchListHistoryPay();
+
+    return () => {
+      setFilteredRows([]);
+      setRows([]);
+    };
   }, []);
 
   return (
-    <>
-      <Box
-        display={"flex"}
-        justifyContent={"space-between"}
-        paddingTop={5}
-        paddingX={5}
-        width={"100%"}
-        alignItems={"center"}
-      >
-        <h1 className="font-bold text-2xl">Historial de Pagos</h1>
-
-        <Box display={"flex"} flexDirection={"row"} gap={2}>
-          <Button
-            onClick={() => {
-              setSelectedOption("");
-              setFilteredAppoiment(rows);
-            }}
-            variant="outlined"
-            endIcon={<VisibilityIcon />}
-          >
-            Ver todos
-          </Button>
-          <FormControl sx={{ width: 300 }}>
-            <InputLabel>Selecciona una opcion</InputLabel>
-            <Select
-              value={selectedOption}
-              onChange={handleChange}
-              input={<OutlinedInput label="Selecciona una opcion" />}
-              renderValue={(selected) => selected}
-            >
-              {options.map((opt) => (
-                <MenuItem key={opt} value={opt}>
-                  <Checkbox checked={selectedOption.indexOf(opt) > -1} />
-                  <ListItemText primary={opt} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            {selectedOption !== "" ? (
-              selectedOption === "Dia" ? (
-                <Grid item xs={6} sm={2}>
-                  <DatePicker
-                    format="DD/MM/YYYY"
-                    maxDate={tomorrow}
-                    onChange={(value) => {
-                      const newDate = value!.format("DD/MM/YYYY");
-
-                      const productosFiltrados = rows.filter(
-                        (row) => row.fecha === newDate
-                      );
-
-                      if (newDate !== "") {
-                        if (productosFiltrados.length) {
-                          setFilteredAppoiment(productosFiltrados);
-                        } else {
-                          setFilteredAppoiment([]);
-                        }
-                      }
-                    }}
-                    views={["day", "month", "year"]}
-                    label="Fecha"
-                    slotProps={{ textField: { fullWidth: true } }}
-                  />
-                </Grid>
-              ) : (
-                <Grid item xs={6} sm={2}>
-                  <DemoItem>
-                    <DatePicker
-                      onChange={(value) => {
-                        const newMonth = value!.format("MM");
-
-                        const productosFiltrados = rows.filter((row) =>
-                          row.fecha.split("/")[1].includes(newMonth)
-                        );
-
-                        if (newMonth !== "") {
-                          if (productosFiltrados.length) {
-                            setFilteredAppoiment(productosFiltrados);
-                          } else {
-                            setFilteredAppoiment([]);
-                          }
-                        }
-                      }}
-                      maxDate={tomorrow}
-                      views={["month"]}
-                      label="Mes"
-                      slotProps={{ textField: { fullWidth: true } }}
-                    />
-                  </DemoItem>
-                </Grid>
-              )
-            ) : (
-              <></>
-            )}
-          </LocalizationProvider>
-        </Box>
-      </Box>
-      <Box
-        sx={{
-          paddingX: 5,
-          paddingY: 3,
-          height: 500,
-          width: "100%",
-          "& .actions": {
-            color: "text.secondary",
-          },
-          "& .textPrimary": {
-            color: "text.primary",
-          },
+    <ContainerTablePay
+      rows={rows}
+      setFilteredRows={setFilteredRows}
+      handleChangeSelected={handleChange}
+      options={options}
+      selectedOption={selectedOption}
+      setSelectedOption={setSelectedOption}
+    >
+      <DataGrid
+        style={{ height: "100%" }}
+        rows={filteredRows}
+        columns={columns}
+        editMode="row"
+        rowModesModel={rowModesModel}
+        onRowModesModelChange={handleRowModesModelChange}
+        onRowEditStop={handleRowEditStop}
+        processRowUpdate={processRowUpdate}
+        slotProps={{
+          toolbar: { setRows, setRowModesModel },
         }}
-      >
-        <DataGrid
-          style={{ height: "100%" }}
-          rows={filteredAppoiment}
-          columns={columns}
-          editMode="row"
-          rowModesModel={rowModesModel}
-          onRowModesModelChange={handleRowModesModelChange}
-          onRowEditStop={handleRowEditStop}
-          processRowUpdate={processRowUpdate}
-          slotProps={{
-            toolbar: { setRows, setRowModesModel },
-          }}
-        />
-      </Box>
-    </>
+      />
+    </ContainerTablePay>
   );
 };

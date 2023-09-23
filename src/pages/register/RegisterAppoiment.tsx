@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   TextField,
   Grid,
@@ -18,21 +17,16 @@ import logo from "../../assets/Estilo.jpg";
 import { useForm } from "react-hook-form";
 import { FormData } from "../../interfaces";
 import { ButtonBackAndRegister } from "../../components/buttons/ButtonBackAndRegister";
-
-import { getEmployees } from "../../services/Get";
+import { useListEmployees } from "../../hooks/useListEmployees";
 import { postAppoiment } from "../../services/Post";
 
 const today = dayjs();
 const tomorrow = dayjs().add(0, "day");
 const eightAM = dayjs().set("hour", 8).startOf("hour");
 
-interface IListEmployees {
-  id: string;
-  nombre: string;
-}
-
 export default function RegisterAppoiment() {
-  const [listEmployees, setListEmployees] = useState<IListEmployees[]>([]);
+  const { listEmployees } = useListEmployees();
+
   const {
     register,
     handleSubmit,
@@ -50,16 +44,13 @@ export default function RegisterAppoiment() {
     },
   });
 
-  const onRegisterForm = async (data: FormData) => await postAppoiment(data);
-
-  useEffect(() => {
-    const fetchDataEmployees = async () => {
-      const resp = await getEmployees();
-
-      setListEmployees(resp);
-    };
-    fetchDataEmployees();
-  }, []);
+  const onRegisterForm = async (data: FormData) => {
+    if (typeof data.date === "object") {
+      await postAppoiment(data);
+      return;
+    }
+    await postAppoiment({ ...data, date: dayjs(new Date()) });
+  };
 
   return (
     <ContainerMain>
@@ -133,9 +124,7 @@ export default function RegisterAppoiment() {
                     minDate={tomorrow}
                     views={["day", "month", "year"]}
                     label="Fecha"
-                    onChange={(value) =>
-                      setValue("date", value!.format("DD/MM/YYYY"))
-                    }
+                    onChange={(value) => setValue("date", value)}
                     slotProps={{ textField: { fullWidth: true } }}
                   />
                 </Grid>

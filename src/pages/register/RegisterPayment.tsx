@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   TextField,
@@ -17,21 +16,18 @@ import dayjs from "dayjs";
 import { ContainerMain } from "../../components/containers/ContainerMain";
 import { ButtonBackAndRegister } from "../../components/buttons/ButtonBackAndRegister";
 
-import { getEmployees } from "../../services/Get";
+import { useListEmployees } from "../../hooks/useListEmployees";
 import { postPayment } from "../../services/Post";
 
 import logo from "../../assets/Estilo.jpg";
+
 import { FormDataPayment } from "../../interfaces";
 
 const today = dayjs();
 
-interface IListEmployees {
-  id: string;
-  nombre: string;
-}
-
 export default function RegisterPayment() {
-  const [listEmployees, setListEmployees] = useState<IListEmployees[]>([]);
+  const { listEmployees } = useListEmployees();
+
   const {
     register,
     handleSubmit,
@@ -51,22 +47,20 @@ export default function RegisterPayment() {
     },
   });
 
-  const onRegisterForm = async (data: FormDataPayment) =>
-    await postPayment({
+  const onRegisterForm = async (data: FormDataPayment) => {
+    const formData = {
       ...data,
       gasto: Number(data.gasto),
       insumo: Number(data.insumo),
       servicio: Number(data.servicio),
-    });
-
-  useEffect(() => {
-    const fetchDataEmployees = async () => {
-      const resp = await getEmployees();
-
-      setListEmployees(resp);
     };
-    fetchDataEmployees();
-  }, []);
+
+    if (typeof data.date === "object") {
+      await postPayment(formData);
+      return;
+    }
+    await postPayment({ ...formData, date: dayjs(new Date()) });
+  };
 
   return (
     <ContainerMain>
@@ -183,9 +177,7 @@ export default function RegisterPayment() {
                     format="DD/MM/YYYY"
                     views={["day", "month", "year"]}
                     label="Fecha"
-                    onChange={(value) =>
-                      setValue("date", value!.format("DD/MM/YYYY"))
-                    }
+                    onChange={(value) => setValue("date", value)}
                     slotProps={{ textField: { fullWidth: true } }}
                   />
                 </Grid>
