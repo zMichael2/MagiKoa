@@ -29,6 +29,7 @@ export default function History() {
           variant="contained"
           onClick={() => navigate("/")}
           style={{
+            padding: "1rem 5rem",
             backgroundColor: purpleDark,
             width: "20%",
             height: "45px",
