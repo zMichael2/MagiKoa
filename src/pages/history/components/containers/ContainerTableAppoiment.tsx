@@ -40,7 +40,6 @@ export const ContainerTableAppoiment: React.FC<IContainerTableHistory> = ({
                 minDate={tomorrow}
                 onChange={(value) => {
                   const newDate = value!.format("DD/MM/YYYY");
-                  console.log({ value, newDate, rows });
 
                   const productosFiltrados = rows.filter(
                     (row) => dayjs(row.fecha).format("DD/MM/YYYY") === newDate

@@ -6,12 +6,13 @@ import {
   GridRowModel,
   DataGrid,
   GridColDef,
+  GridRowsProp,
 } from "@mui/x-data-grid";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Button, SelectChangeEvent } from "@mui/material";
+import { Box, Button, SelectChangeEvent } from "@mui/material";
 import { ContainerTablePay } from "./containers/ContainerTablePay";
 import { useEventsTableHistory } from "../../../hooks/useEventsTableHistory";
 
@@ -23,6 +24,7 @@ import { options } from "../../../constants";
 
 export const HistoryPay: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<string>("");
+  const [total, setTotal] = useState<number>(0);
 
   const {
     filteredRows,
@@ -48,16 +50,34 @@ export const HistoryPay: React.FC = () => {
 
   const handleDeleteClick = (id: GridRowId) => async () => {
     await deletePayment(String(id));
-    setFilteredRows(filteredRows.filter((row) => row.id !== id));
+    const d = filteredRows.filter((row) => row.id !== id);
+    setFilteredRows(d);
     setRows(rows.filter((row) => row.id !== id));
+
+    const reduce = d.reduce(
+      (acum, actual) =>
+        acum +
+        (Number(actual.insumo) +
+          Number(actual.servicio) -
+          Number(actual.gasto)),
+
+      0
+    );
+
+    setTotal(reduce);
   };
 
   const processRowUpdate = async (newRow: GridRowModel) => {
     const updatedRow = { ...newRow, isNew: false };
-    // setFilteredRows(
-    //   rows.map((row) => (row.id === newRow.id ? updatedRow : row))
-    // );
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+
+    const total =
+      Number(newRow.insumo) + Number(newRow.servicio) - Number(newRow.gasto);
+
+    setFilteredRows(
+      filteredRows.map((row) =>
+        row.id === newRow.id ? { ...updatedRow, total } : row
+      )
+    );
 
     const data = {
       employee: newRow.empleado_id,
@@ -68,12 +88,25 @@ export const HistoryPay: React.FC = () => {
       typePay: newRow.tipo_pago,
       date: newRow.fecha,
     };
-    await putPayment(data, newRow.id);
+    const resp = await putPayment(data, newRow.id);
 
-    const total =
-      Number(newRow.insumo) + Number(newRow.servicio) - Number(newRow.gasto);
+    const dataReduce: GridRowsProp = filteredRows.map((row) =>
+      row.id === newRow.id ? updatedRow : row
+    );
 
-    return { ...updatedRow, total };
+    const reduce = dataReduce.reduce(
+      (acum, actual) =>
+        acum +
+        (Number(actual.insumo) +
+          Number(actual.servicio) -
+          Number(actual.gasto)),
+
+      0
+    );
+
+    setTotal(reduce);
+
+    return { ...updatedRow, total: resp.data };
   };
 
   const columns: GridColDef[] = [
@@ -224,37 +257,70 @@ export const HistoryPay: React.FC = () => {
       const resp = await getPayments();
       setFilteredRows(resp);
       setRows(resp);
+
+      const reduce = resp.reduce(
+        (acum, actual) =>
+          acum +
+          (Number(actual.insumo) +
+            Number(actual.servicio) -
+            Number(actual.gasto)),
+
+        0
+      );
+
+      setTotal(reduce);
     };
     fetchListHistoryPay();
-
-    return () => {
-      setFilteredRows([]);
-      setRows([]);
-    };
   }, []);
 
   return (
-    <ContainerTablePay
-      rows={rows}
-      setFilteredRows={setFilteredRows}
-      handleChangeSelected={handleChange}
-      options={options}
-      selectedOption={selectedOption}
-      setSelectedOption={setSelectedOption}
-    >
-      <DataGrid
-        style={{ height: "100%" }}
-        rows={filteredRows}
-        columns={columns}
-        editMode="row"
-        rowModesModel={rowModesModel}
-        onRowModesModelChange={handleRowModesModelChange}
-        onRowEditStop={handleRowEditStop}
-        processRowUpdate={processRowUpdate}
-        slotProps={{
-          toolbar: { setRows, setRowModesModel },
-        }}
-      />
-    </ContainerTablePay>
+    <>
+      <ContainerTablePay
+        rows={rows}
+        setRows={setRows}
+        setFilteredRows={setFilteredRows}
+        handleChangeSelected={handleChange}
+        options={options}
+        selectedOption={selectedOption}
+        setSelectedOption={setSelectedOption}
+        setTotal={setTotal}
+      >
+        <DataGrid
+          style={{ height: "100%" }}
+          rows={filteredRows}
+          columns={columns}
+          editMode="row"
+          rowModesModel={rowModesModel}
+          onRowModesModelChange={handleRowModesModelChange}
+          onRowEditStop={handleRowEditStop}
+          processRowUpdate={processRowUpdate}
+          slotProps={{
+            toolbar: { setRows, setRowModesModel },
+          }}
+        />
+      </ContainerTablePay>{" "}
+      <Box
+        display={"flex"}
+        flexDirection={"row"}
+        justifyContent={"flex-end"}
+        alignItems={"center"}
+        gap={1}
+        paddingX={5}
+      >
+        <Box
+          display={"flex"}
+          flexDirection={"row"}
+          justifyContent={"flex-end"}
+          alignItems={"center"}
+          gap={1}
+          padding={1}
+          borderRadius={2}
+          sx={{ border: "2px solid #A056FF" }}
+        >
+          <p className="font-bold text-xl">Total:</p>
+          <span>{total.toLocaleString("es-CO")}</span>
+        </Box>
+      </Box>
+    </>
   );
 };

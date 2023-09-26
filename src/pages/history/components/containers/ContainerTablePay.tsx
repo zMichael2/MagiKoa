@@ -16,6 +16,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DatePicker } from "@mui/x-date-pickers";
 import { DemoItem } from "@mui/x-date-pickers/internals/demo";
+import { getPayments } from "../../../../services/Get";
 
 import { IContainerTablePay } from "../../../../interfaces";
 
@@ -24,11 +25,13 @@ const tomorrow = dayjs().add(0, "day");
 export const ContainerTablePay: React.FC<IContainerTablePay> = ({
   children,
   rows,
+  setRows,
   setFilteredRows,
   selectedOption,
   setSelectedOption,
   handleChangeSelected,
   options,
+  setTotal,
 }) => {
   return (
     <>
@@ -44,9 +47,24 @@ export const ContainerTablePay: React.FC<IContainerTablePay> = ({
 
         <Box display={"flex"} flexDirection={"row"} gap={2}>
           <Button
-            onClick={() => {
+            disabled={!selectedOption}
+            onClick={async () => {
+              const rowsData = await getPayments();
+
               setSelectedOption("");
-              setFilteredRows(rows);
+              setFilteredRows(rowsData);
+              setRows(rowsData);
+
+              const reduce = rowsData.reduce(
+                (acum, actual) =>
+                  acum +
+                  (Number(actual.insumo) +
+                    Number(actual.servicio) -
+                    Number(actual.gasto)),
+                0
+              );
+
+              setTotal(reduce);
             }}
             variant="outlined"
             endIcon={<VisibilityIcon />}
@@ -84,6 +102,17 @@ export const ContainerTablePay: React.FC<IContainerTablePay> = ({
                           dayjs(row.fecha).format("DD/MM/YYYY") === newDate
                       );
 
+                      const reduce = productosFiltrados.reduce(
+                        (acum, actual) =>
+                          acum +
+                          (Number(actual.insumo) +
+                            Number(actual.servicio) -
+                            Number(actual.gasto)),
+                        0
+                      );
+
+                      setTotal(reduce);
+
                       if (newDate !== "") {
                         if (productosFiltrados.length) {
                           setFilteredRows(productosFiltrados);
@@ -110,6 +139,17 @@ export const ContainerTablePay: React.FC<IContainerTablePay> = ({
                             .split("/")[1]
                             .includes(newMonth)
                         );
+
+                        const reduce = productosFiltrados.reduce(
+                          (acum, actual) =>
+                            acum +
+                            (Number(actual.insumo) +
+                              Number(actual.servicio) -
+                              Number(actual.gasto)),
+                          0
+                        );
+
+                        setTotal(reduce);
 
                         if (newMonth !== "") {
                           if (productosFiltrados.length) {

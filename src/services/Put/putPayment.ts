@@ -47,7 +47,8 @@ export const putPayment = async (
 
     const response = await fetch(`${BASE_URL}/update/payment`, options);
     if (response.status == 200) {
-      return toast.success("Modificacion del registro exitoso");
+      toast.success("Modificacion del registro exitoso");
+      return await response.json();
     }
     return toast.error("Ha ocurrido un error");
   } catch (e) {
