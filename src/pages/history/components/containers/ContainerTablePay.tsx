@@ -36,16 +36,13 @@ export const ContainerTablePay: React.FC<IContainerTablePay> = ({
   return (
     <>
       <Box
-        display={"flex"}
-        justifyContent={"space-between"}
+        className="flex justify-between flex-col lg:flex-row gap-4 w-full items-center"
         paddingTop={5}
         paddingX={5}
-        width={"100%"}
-        alignItems={"center"}
       >
-        <h1 className="font-bold text-2xl">Historial de Pagos</h1>
+        <h1 className="font-bold text-2xl text-center">Historial de Pagos</h1>
 
-        <Box display={"flex"} flexDirection={"row"} gap={2}>
+        <Box className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
           <Button
             disabled={!selectedOption}
             onClick={async () => {
@@ -71,7 +68,7 @@ export const ContainerTablePay: React.FC<IContainerTablePay> = ({
           >
             Ver todos
           </Button>
-          <FormControl sx={{ width: 300 }}>
+          <FormControl className="w-full md:w-[300px]">
             <InputLabel>Selecciona una opcion</InputLabel>
             <Select
               value={selectedOption}

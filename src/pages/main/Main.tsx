@@ -11,15 +11,19 @@ const Main = () => {
   const navigate = useNavigate();
   const onNagivate = (route: string) => navigate(route);
   return (
-    <ContainerMain>
+    <ContainerMain isPadding>
       <div className="flex justify-center items-center h-full">
         <div className="flex-col gap-8 flex">
-          <img src={logo} alt="logo" className="h-[300px] rounded-full" />
+          <img
+            src={logo}
+            alt="logo"
+            className="w-full h-full md:h-[300px] rounded-full"
+          />
           <div className="flex flex-col gap-4">
             <Button
               variant="contained"
               endIcon={<ArticleIcon />}
-              style={{ backgroundColor: purpleDark }}
+              style={{ backgroundColor: purpleDark, padding: ".8rem" }}
               onClick={() => onNagivate("/registerAppoiment")}
             >
               Registrar cita
@@ -27,7 +31,7 @@ const Main = () => {
             <Button
               variant="contained"
               endIcon={<AddBusinessIcon />}
-              style={{ backgroundColor: purpleDark }}
+              style={{ backgroundColor: purpleDark, padding: ".8rem" }}
               onClick={() => onNagivate("/registerPayment")}
             >
               Registrar pagos
@@ -35,7 +39,7 @@ const Main = () => {
             <Button
               variant="contained"
               endIcon={<ReceiptLongIcon />}
-              style={{ backgroundColor: purpleDark }}
+              style={{ backgroundColor: purpleDark, padding: ".8rem" }}
               onClick={() => onNagivate("/history")}
             >
               Historial

@@ -75,7 +75,7 @@ export const HistoryAppoiment: React.FC = () => {
     {
       field: "celular",
       headerName: "Celular",
-      width: 100,
+      width: 200,
       editable: true,
       headerClassName: "header-grid",
     },
@@ -88,7 +88,7 @@ export const HistoryAppoiment: React.FC = () => {
     {
       field: "fecha",
       headerName: "Fecha",
-      width: 100,
+      width: 200,
       editable: true,
       type: "date",
       headerClassName: "header-grid",
@@ -104,7 +104,7 @@ export const HistoryAppoiment: React.FC = () => {
       field: "actions",
       type: "actions",
       headerName: "Actions",
-      width: 270,
+      width: 300,
       cellClassName: "actions",
       align: "center",
       headerClassName: "header-grid",

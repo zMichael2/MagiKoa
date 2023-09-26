@@ -16,7 +16,11 @@ export const ButtonBackAndRegister: React.FC<IButtonBackAndRegister> = ({
 
   const onNagivate = (route: string) => navigate(route);
   return (
-    <Box mt={10} display={"flex"} justifyContent={"space-between"} gap={3}>
+    <Box
+      sx={{ mt: 7 }}
+      mt={10}
+      className="flex flex-col md:flex-row space-between gap-3"
+    >
       <ButtonStyleTheme onClick={() => onNagivate("/")} variant="outlined">
         {titleBackButton}
       </ButtonStyleTheme>

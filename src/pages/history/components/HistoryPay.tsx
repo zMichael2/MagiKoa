@@ -203,7 +203,7 @@ export const HistoryPay: React.FC = () => {
       field: "actions",
       type: "actions",
       headerName: "Actions",
-      width: 270,
+      width: 300,
       cellClassName: "actions",
       align: "center",
       headerClassName: "header-grid",
