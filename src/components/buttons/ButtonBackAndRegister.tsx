@@ -19,7 +19,7 @@ export const ButtonBackAndRegister: React.FC<IButtonBackAndRegister> = ({
     <Box
       sx={{ mt: 7 }}
       mt={10}
-      className="flex flex-col md:flex-row space-between gap-3"
+      className="flex flex-col-reverse md:flex-row space-between gap-3"
     >
       <ButtonStyleTheme onClick={() => onNagivate("/")} variant="outlined">
         {titleBackButton}

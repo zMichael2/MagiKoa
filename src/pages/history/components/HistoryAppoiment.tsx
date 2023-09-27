@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   GridRowModes,
   GridRowId,
@@ -18,6 +18,7 @@ import { deleteAppoiment } from "../../../services/Delete";
 import { putAppoiment } from "../../../services/Put";
 import { ContainerTableAppoiment } from "./containers/ContainerTableAppoiment";
 import { useEventsTableHistory } from "../../../hooks/useEventsTableHistory";
+import { LoaderTriangle } from "../../../components/loaders/LoaderTriangle";
 
 export const HistoryAppoiment: React.FC = () => {
   const {
@@ -33,14 +34,18 @@ export const HistoryAppoiment: React.FC = () => {
     setRowModesModel,
     setRows,
   } = useEventsTableHistory();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleDeleteClick = (id: GridRowId) => async () => {
+    setLoading(true);
     await deleteAppoiment(String(id));
     setFilteredRows(filteredRows.filter((row) => row.id !== id));
     setRows(rows.filter((row) => row.id !== id));
+    setLoading(false);
   };
 
   const processRowUpdate = async (newRow: GridRowModel) => {
+    setLoading(true);
     const updatedRow = { ...newRow, isNew: false };
     // setFilteredRows(
     //   rows.map((row) => (row.id === newRow.id ? updatedRow : row))
@@ -59,7 +64,7 @@ export const HistoryAppoiment: React.FC = () => {
     // console.log(data, "edit");
 
     await putAppoiment(data, newRow.id);
-
+    setLoading(false);
     return updatedRow;
   };
 
@@ -173,6 +178,7 @@ export const HistoryAppoiment: React.FC = () => {
 
   return (
     <>
+      {loading ? <LoaderTriangle /> : <></>}
       <ContainerTableAppoiment rows={rows} setFilteredRows={setFilteredRows}>
         <DataGrid
           style={{ height: "100%" }}

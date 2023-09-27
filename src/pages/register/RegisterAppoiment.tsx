@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   TextField,
   Grid,
@@ -19,42 +20,60 @@ import { FormData } from "../../interfaces";
 import { ButtonBackAndRegister } from "../../components/buttons/ButtonBackAndRegister";
 import { useListEmployees } from "../../hooks/useListEmployees";
 import { postAppoiment } from "../../services/Post";
+import { LoaderTriangle } from "../../components/loaders/LoaderTriangle";
 
 const today = dayjs();
 const tomorrow = dayjs().add(0, "day");
 const eightAM = dayjs().set("hour", 8).startOf("hour");
+const values: FormData = {
+  employee: "",
+  nameClient: "",
+  phone: "",
+  hour: eightAM.format("h:mm a"),
+  date: today.format("DD/MM/YYYY"),
+  description: "",
+};
 
 export default function RegisterAppoiment() {
   const { listEmployees } = useListEmployees();
+  const [employeeId, setChangeEmployeeId] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const {
     register,
     handleSubmit,
     setValue,
     getValues,
+    reset,
+
     formState: { errors },
   } = useForm<FormData>({
-    defaultValues: {
-      employee: "",
-      nameClient: "",
-      phone: "",
-      hour: eightAM.format("h:mm a"),
-      date: today.format("DD/MM/YYYY"),
-      description: "",
-    },
+    defaultValues: values,
   });
 
   const onRegisterForm = async (data: FormData) => {
+    setLoading(true);
+
     if (typeof data.date === "object") {
       await postAppoiment(data);
+      setLoading(false);
       return;
     }
-    await postAppoiment({ ...data, date: dayjs(new Date()) });
+
+    await postAppoiment({
+      ...data,
+      date: dayjs(new Date()),
+    });
+
+    reset(values);
+    setChangeEmployeeId("");
+    setLoading(false);
   };
 
   return (
     <ContainerMain>
-      <div className="flex flex-row ">
+      {loading ? <LoaderTriangle /> : <></>}
+      <div className="flex flex-row">
         <div className="h-full lg:h-[865px] w-[980px] p-8 lg:p-14">
           <h1 className="font-bold text-2xl">Registrar Cítas</h1>
           <h3>Introduzca los datos para el registro de la cita</h3>
@@ -75,6 +94,11 @@ export default function RegisterAppoiment() {
                     {...register("employee", {
                       required: "Este campo es requerido",
                     })}
+                    value={employeeId}
+                    onChange={(value) => {
+                      setChangeEmployeeId(value.target.value);
+                      setValue("employee", value.target.value);
+                    }}
                   >
                     {listEmployees.map((employee) => {
                       return (
@@ -112,7 +136,11 @@ export default function RegisterAppoiment() {
                   placeholder="Celular del cliente"
                   type="text"
                   fullWidth
-                  {...register("phone")}
+                  {...register("phone", {
+                    required: "Este campo es requerido",
+                  })}
+                  error={!!errors.phone}
+                  helperText={errors.phone?.message}
                 />
               </Grid>
 

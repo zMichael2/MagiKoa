@@ -12,6 +12,7 @@ export const postAppoiment = async ({
   hour,
 }: FormData) => {
   try {
+    console.log("aca");
     const data = {
       empleado_id: employee,
       descripcion: description,
@@ -29,6 +30,7 @@ export const postAppoiment = async ({
     };
 
     const response = await fetch(`${BASE_URL}/register/appointment`, options);
+
     if (response.status == 200) {
       return toast.success("Creacion del registro exitoso");
     }

@@ -10,7 +10,7 @@ export const ContainerMain: React.FC<IContainerMainProps> = ({
         <div
           className={`${
             isPadding ? "p-8" : ""
-          } w-auto h-[600px] md:w-3/4  lg:w-[1199px] 2xl:h-[865px] overflow-y-auto bg-white rounded-md`}
+          } w-auto h-[600px] md:w-3/4  lg:w-[1199px] lg:h-full 2xl:h-[865px] overflow-y-auto bg-white rounded-md`}
         >
           {children}
         </div>

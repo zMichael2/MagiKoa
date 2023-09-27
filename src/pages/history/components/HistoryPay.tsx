@@ -21,10 +21,12 @@ import { deletePayment } from "../../../services/Delete";
 import { putPayment } from "../../../services/Put";
 
 import { options } from "../../../constants";
+import { LoaderTriangle } from "../../../components/loaders/LoaderTriangle";
 
 export const HistoryPay: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [total, setTotal] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const {
     filteredRows,
@@ -49,6 +51,7 @@ export const HistoryPay: React.FC = () => {
   };
 
   const handleDeleteClick = (id: GridRowId) => async () => {
+    setLoading(true);
     await deletePayment(String(id));
     const d = filteredRows.filter((row) => row.id !== id);
     setFilteredRows(d);
@@ -65,9 +68,11 @@ export const HistoryPay: React.FC = () => {
     );
 
     setTotal(reduce);
+    setLoading(false);
   };
 
   const processRowUpdate = async (newRow: GridRowModel) => {
+    setLoading(true);
     const updatedRow = { ...newRow, isNew: false };
 
     const total =
@@ -105,7 +110,7 @@ export const HistoryPay: React.FC = () => {
     );
 
     setTotal(reduce);
-
+    setLoading(false);
     return { ...updatedRow, total: resp.data };
   };
 
@@ -275,6 +280,7 @@ export const HistoryPay: React.FC = () => {
 
   return (
     <>
+      {loading ? <LoaderTriangle /> : <></>}
       <ContainerTablePay
         rows={rows}
         setRows={setRows}

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   TextField,
@@ -22,32 +23,39 @@ import { postPayment } from "../../services/Post";
 import logo from "../../assets/Estilo.jpg";
 
 import { FormDataPayment } from "../../interfaces";
+import { LoaderTriangle } from "../../components/loaders/LoaderTriangle";
 
 const today = dayjs();
 
+const values: FormDataPayment = {
+  employee: "",
+  nameClient: "",
+  date: today.format("DD/MM/YYYY"),
+  description: "",
+  typePay: "Efectivo",
+  gasto: 0,
+  insumo: 0,
+  servicio: 0,
+};
+
 export default function RegisterPayment() {
   const { listEmployees } = useListEmployees();
+  const [employeeId, setChangeEmployeeId] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const {
     register,
     handleSubmit,
     getValues,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<FormDataPayment>({
-    defaultValues: {
-      employee: "",
-      nameClient: "",
-      date: today.format("DD/MM/YYYY"),
-      description: "",
-      typePay: "Efectivo",
-      gasto: 0,
-      insumo: 0,
-      servicio: 0,
-    },
+    defaultValues: values,
   });
 
   const onRegisterForm = async (data: FormDataPayment) => {
+    setLoading(true);
     const formData = {
       ...data,
       gasto: Number(data.gasto),
@@ -57,13 +65,19 @@ export default function RegisterPayment() {
 
     if (typeof data.date === "object") {
       await postPayment(formData);
+      setLoading(false);
       return;
     }
     await postPayment({ ...formData, date: dayjs(new Date()) });
+    setLoading(false);
+
+    reset(values);
+    setChangeEmployeeId("");
   };
 
   return (
     <ContainerMain>
+      {loading ? <LoaderTriangle /> : <></>}
       <div className="flex flex-row ">
         <div className="h-full lg:h-[865px] w-[980px] p-8 lg:p-14">
           <h1 className="font-bold text-2xl">Registrar pagos</h1>
@@ -84,6 +98,11 @@ export default function RegisterPayment() {
                     {...register("employee", {
                       required: "Este campo es requerido",
                     })}
+                    value={employeeId}
+                    onChange={(value) => {
+                      setChangeEmployeeId(value.target.value);
+                      setValue("employee", value.target.value);
+                    }}
                   >
                     {listEmployees.map((employee) => {
                       return (
