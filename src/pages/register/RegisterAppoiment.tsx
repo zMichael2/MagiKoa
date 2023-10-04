@@ -66,8 +66,8 @@ export default function RegisterAppoiment() {
     });
 
     setLoading(false);
-    reset(values);
     setChangeEmployeeId("");
+    reset(values);
   };
 
   return (
