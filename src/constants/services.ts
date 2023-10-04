@@ -1,1 +1,1 @@
-export const BASE_URL = "https://b4t41v7k-3000.use2.devtunnels.ms";
+export const BASE_URL = "https://magikoa.onrender.com";
