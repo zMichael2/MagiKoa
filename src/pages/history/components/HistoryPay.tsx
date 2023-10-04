@@ -260,11 +260,17 @@ export const HistoryPay: React.FC = () => {
   useEffect(() => {
     const fetchListHistoryPay = async () => {
       type Payment = {
-        insumo: number;
-        servicio: number;
-        gasto: number;
-        // Otras propiedades si las tienes
+        id: string;
+        empleado_id: string;
+        descripcion: string;
+        gasto: string;
+        insumo: string;
+        servicio: string;
+        total: string;
+        tipo_pago: string;
+        fecha: string;
       };
+
       const resp: Payment[] = await getPayments();
       setFilteredRows(resp);
       setRows(resp);

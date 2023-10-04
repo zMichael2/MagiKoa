@@ -46,7 +46,18 @@ export const ContainerTablePay: React.FC<IContainerTablePay> = ({
           <Button
             disabled={!selectedOption}
             onClick={async () => {
-              const rowsData = await getPayments();
+              type Payment = {
+                id: string;
+                empleado_id: string;
+                descripcion: string;
+                gasto: string;
+                insumo: string;
+                servicio: string;
+                total: string;
+                tipo_pago: string;
+                fecha: string;
+              };
+              const rowsData: Payment[] = await getPayments();
 
               setSelectedOption("");
               setFilteredRows(rowsData);
