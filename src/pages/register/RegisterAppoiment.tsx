@@ -65,9 +65,9 @@ export default function RegisterAppoiment() {
       date: dayjs(new Date()),
     });
 
+    setLoading(false);
     reset(values);
     setChangeEmployeeId("");
-    setLoading(false);
   };
 
   return (
